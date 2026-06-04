@@ -9,16 +9,25 @@ pipeline {
             }
         }
 
-        stage('Docker Login & Push') {
+        stage('Docker Login') {
             steps {
-                script {
-                    withDockerRegistry(
+                withCredentials([
+                    usernamePassword(
                         credentialsId: 'docker-cred',
-                        url: 'https://index.docker.io/v1/'
-                    ) {
-                        sh 'docker push rafiqhere/jenkinsfrontend:frontendlatest'
-                    }
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )
+                ]) {
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                    '''
                 }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                sh 'docker push rafiqhere/jenkinsfrontend:frontendlatest'
             }
         }
 
