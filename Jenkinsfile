@@ -2,27 +2,34 @@ pipeline {
     agent any
 
     stages {
-        stage('Build & Tag Docker Image') {
-            steps {
-                script {
-                    dir('src') {
 
-                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
-                        sh "docker build -t stunnershubham/cartservice:latest ."
-                    }
-                        }
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t rafiqhere/jenkins:cartservice ./src'
+            }
+        }
+
+        stage('Docker Login') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'docker-cred',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )
+                ]) {
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                    '''
                 }
             }
         }
-        
+
         stage('Push Docker Image') {
             steps {
-                script {
-                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
-                        sh "docker push stunnershubham/cartservice:latest "
-                    }
-                }
+                sh 'docker push rafiqhere/jenkins:cartservice'
             }
         }
+
     }
 }
