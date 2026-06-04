@@ -5,7 +5,7 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t rafiqhere/jenkinsfrontend:frontendlatest .'
+                sh 'docker build -t rafiqhere/jenkins:frontendlatest .'
             }
         }
 
@@ -27,7 +27,7 @@ pipeline {
 
         stage('Push Docker Image') {
             steps {
-                sh 'docker push rafiqhere/jenkinsfrontend:frontendlatest'
+                sh 'docker push rafiqhere/jenkins:frontendlatest'
             }
         }
 
