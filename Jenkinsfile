@@ -2,20 +2,16 @@ pipeline {
     agent any
 
     stages {
-        stage('Deploy To Kubernetes') {
+        stage('Checkout') {
             steps {
-                withKubeCredentials(kubectlCredentials: [[caCertificate: '', clusterName: 'EKS-1', contextName: '', credentialsId: 'k8-token', namespace: 'webapps', serverUrl: 'https://B7C7C20487B2624AAB0AD54DF1469566.yl4.ap-south-1.eks.amazonaws.com']]) {
-                    sh "kubectl apply -f deployment-service.yml"
-                    
-                }
+                git branch: 'main',
+                    url: 'https://github.com/rafiqhere/Microservice.git'
             }
         }
-        
-        stage('verify Deployment') {
+
+        stage('Generate Jobs') {
             steps {
-                withKubeCredentials(kubectlCredentials: [[caCertificate: '', clusterName: 'EKS-1', contextName: '', credentialsId: 'k8-token', namespace: 'webapps', serverUrl: 'https://B7C7C20487B2624AAB0AD54DF1469566.yl4.ap-south-1.eks.amazonaws.com']]) {
-                    sh "kubectl get svc -n webapps"
-                }
+                jobDsl targets: 'jobs/*.groovy'
             }
         }
     }
