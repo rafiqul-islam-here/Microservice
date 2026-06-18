@@ -5,45 +5,54 @@
 # You may obtain a copy of the License at
 #
 #      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 
-FROM node:20.2.0-alpine@sha256:f25b0e9d3d116e267d4ff69a3a99c0f4cf6ae94eadd87f1bf7bd68ea3ff0bef7 as base
+# =========================
+# BASE IMAGE (FIXED)
+# =========================
+FROM node:20 AS base
 
-FROM base as builder
+# =========================
+# BUILDER STAGE
+# =========================
+FROM base AS builder
 
-# Some packages (e.g. @google-cloud/profiler) require additional
-# deps for post-install scripts
-RUN apk add --update --no-cache \
+# Build dependencies for native modules
+RUN apt-get update && apt-get install -y \
     python3 \
     make \
-    g++ 
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /usr/src/app
 
 COPY package*.json ./
 
-RUN npm install --only=production
+# Better CI/CD install method
+RUN npm ci --omit=dev
 
-FROM base as without-grpc-health-probe-bin
+# =========================
+# RUNTIME IMAGE
+# =========================
+FROM base AS runtime
 
 WORKDIR /usr/src/app
 
 COPY --from=builder /usr/src/app/node_modules ./node_modules
-
 COPY . .
 
 EXPOSE 50051
 
-ENTRYPOINT [ "node", "index.js" ]
+ENTRYPOINT ["node", "index.js"]
 
-FROM without-grpc-health-probe-bin
+# =========================
+# GRPC HEALTH PROBE STAGE
+# =========================
+FROM runtime
 
-# renovate: datasource=github-releases depName=grpc-ecosystem/grpc-health-probe
 ENV GRPC_HEALTH_PROBE_VERSION=v0.4.18
-RUN wget -qO/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64 && \
-    chmod +x /bin/grpc_health_probe
+
+RUN apt-get update && apt-get install -y wget \
+    && wget -qO /bin/grpc_health_probe \
+    https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64 \
+    && chmod +x /bin/grpc_health_probe \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
