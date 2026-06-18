@@ -25,7 +25,7 @@ pipeline {
             }
         }
 
-        stage('Push Docker Image') {
+        stage('Push Docker hub Image') {
             steps {
                 sh 'docker push rafiqhere/jenkins:paymentservice'
             }
