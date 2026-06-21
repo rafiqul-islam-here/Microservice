@@ -31,16 +31,7 @@ services.each { service ->
         }
 
         triggers {
-            // triggers build when GitHub push happens
-            githubPush()
-        }
-
-        properties {
-            pipelineTriggers {
-                triggers {
-                    githubPush()
-                }
-            }
+            scm('H/2 * * * *')
         }
     }
 }
