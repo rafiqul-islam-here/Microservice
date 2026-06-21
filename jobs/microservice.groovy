@@ -1,11 +1,21 @@
 def services = [
     "frontend",
     "cartservice",
-    "adservice"
+    "adservice",
+    "checkoutservice",
+    "currencyservice",
+    "emailservice",
+    "loadgenerator",
+    "paymentservice",
+    "productcatalogservice",
+    "recommendationservice",
+    "shippingservice"
 ]
 
 services.each { service ->
+
     pipelineJob("${service}-pipeline") {
+
         definition {
             cpsScm {
                 scm {
@@ -17,6 +27,19 @@ services.each { service ->
                     }
                 }
                 scriptPath("Jenkinsfile")
+            }
+        }
+
+        triggers {
+            // triggers build when GitHub push happens
+            githubPush()
+        }
+
+        properties {
+            pipelineTriggers {
+                triggers {
+                    githubPush()
+                }
             }
         }
     }
